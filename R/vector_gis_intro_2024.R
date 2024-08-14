@@ -11,11 +11,14 @@ library(tigris)
 
 # Load a csv
 
-phila_tracts <- 
+phila_tracts <- read.csv("https://raw.githubusercontent.com/mafichman/cpln_0795/main/data/philadelphia_tracts_2020.csv")
   
 # Manipulate it a bit, do some dplyr verbs
 
+glimpse(phila_tracts)
+
 # Load an sf object
+
 
 # do a tabular join
 
