@@ -1,0 +1,24 @@
+{
+    "id": "FB01B828",
+    "path": "~/GitHub/musa_7950/R/intro_to_R.R",
+    "project_path": null,
+    "type": "r_source",
+    "hash": "1657480090",
+    "contents": "",
+    "dirty": false,
+    "created": 1723687078335.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1691679517,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1691679517,
+    "read_only": false,
+    "read_only_alternatives": []
+}
