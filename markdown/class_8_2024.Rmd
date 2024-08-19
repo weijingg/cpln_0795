@@ -1,0 +1,320 @@
+---
+title: "CPLN 0795 - Class 8"
+author: "Michael Fichman"
+date: "2024-08-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+# Start a Github Account, Fork this repo and clone it
+
+1. Start a github account and download github desktop
+2. Find the repository for this class and "fork" it - https://github.com/mafichman/cpln_0795
+3. Open Github Desktop, and navigate to file -> clone repository. Navigate to the cpln_0795 repo and clone it - it should have populated in your menu
+4. Open class_8_2024.rmd in R Studio.
+
+# The Tutorial
+
+Today we are going to load our ACS data that we have been working with all course long using `tidycensus` - a package that interfaces with the Census API.
+
+We are going to work in R Markdown, basically just running code, and at the end, you can "knit" your own markdown and push it back to your Github repo.
+
+# Start by Clearing Your Workspace
+
+Go to the session tab in R Studio and Clear Workspace to get old objects out of your environment if there are any.
+
+# Load Our Libraries
+
+You can run this "chunk" by copying and pasting the code into the console OR just hitting the little green "play" button on the top of the chunk.
+
+Look at how the "chunk" is formatted - there is a "wrapper" on the code.
+
+```{r, echo=FALSE, message=FALSE}
+# Load required libraries
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(tigris)
+
+```
+
+# Load your census API key
+
+You will need an API key to use tidycensus. Go get one here:
+
+https://api.census.gov/data/key_signup.html
+
+Paste your key into the space below and run the function `census_api_key`
+
+```{r}
+census_api_key("YOUR KEY GOES HERE", overwrite = TRUE)
+```
+
+# Load Variables
+
+Let's load the Census data dictionary from `tidycensus`
+
+```{r}
+acs_variable_list <- load_variables(2020, #year
+                                    "acs5", #five year ACS estimates
+                                    cache = TRUE)
+```
+
+What does `load_variables` do?
+
+We can use the `??` command to look at the documentation of any function in R.
+
+```{r}
+??load_variables
+```
+
+We want to DL Philadelphia 2020 tract-level ACS data.
+
+I like to do this by creating a list of variables to grab that we can feed to tidycensus. The "E" on the end of the code means "Estimate."
+
+```{r}
+acs_vars <- c("B01001_001E", # ACS total Pop estimate
+              "C02003_004E", # One race black
+              "C02003_003E", # One race white
+              "B03001_003E", # Hispanic (all)
+              "B02001_005E", # AAPI
+              "B11012_001E", # n Households
+              "B08137_003E", # Renter hh
+              "B08137_002E", # owner hh
+              "B06011_001E") # Median income in past 12 months
+```
+# Tidycensus Call
+
+If you don't know what get_acs is, try ??get_acs
+
+Note that geometry = TRUE - we are asking for a shp/geojson/sf type object!
+
+```{r}
+acs2020 <- get_acs(geography = "tract",
+                   year = 2020,
+                   variables = acs_vars,
+                   geometry = TRUE,
+                   state = "PA",
+                   county = "Philadelphia",
+                   output = "wide")
+```
+
+# Clean data
+
+Let's use a dplyr pipe to chain some commands together and clean our data.  You should be familiar with all of these columns - this is how I created our data sets for the other classes, it was easy!
+
+Look at each step in the chain - we overwrite `acs2020` by creating a new object called `acs2020`, that consisits of our ACS data, with only the GEOID, NAME and our `acs_vars` (e.g. just the Estimates) selected. We `rename` these to be something more intelligible, and then we use `mutate` to make some new columns.
+
+```{r}
+acs2020 <- acs2020 %>%
+  select(GEOID, NAME, acs_vars) %>%
+  rename(pop = B01001_001E,
+         med_inc = B06011_001E,
+         blk_tot = C02003_004E,
+         wht_tot = C02003_003E,
+         hsp_tot = B03001_003E,
+         aapi_tot = B02001_005E,
+         hhs = B11012_001E,
+         renter_hh = B08137_003E,
+         owner_hh = B08137_002E) %>%
+  mutate(year = 2020,
+         pct_wht = 100*(wht_tot/pop),
+         pct_blk = 100*(blk_tot/pop),
+         pct_hsp = 100*(hsp_tot/pop),
+         pct_aapi = 100*(aapi_tot/pop),
+         rent_pct = 100*(renter_hh / hhs))
+```
+
+# Load the 311 data
+
+Our 311 data from Class 3 are hosted online at my class repo - you can use  `st_read` to read a spatial data object right in from the internet using the URL.
+
+```{r}
+philly_311 <- st_read("https://raw.githubusercontent.com/mafichman/cpln_0795/main/data/philly_311.geojson")
+```
+
+# Explore 311 data
+
+Check out the data, these are points.
+
+```{r}
+ggplot()+
+  geom_sf(data = philly_311)
+```
+
+We can check the CRS
+
+```{r}
+st_crs(philly_311)
+```
+
+Does it match the thing we want to join it to?
+
+```{r}
+st_crs(acs2020)
+```
+
+Let's transform the CRS of `acs2020` to conform to the philly_311 projection - 2272.
+
+Where did 2272 come from? Check out spatialreference.org for a list of all the CRS numbers and details about them.
+
+```{r}
+acs2020 <- acs2020 %>%
+  st_transform(crs = 2272)
+```
+
+# ACS and 311 data together
+
+## Plotting
+
+Now that everything is in the same CRS, let's look at both things together. Let's set acs2020 to just be all black, no aes() visualization here, and let's set our linework to transparent.
+
+We can vary the aesthetics of the points to see if we can get a better looking map. I'm going to make the points yellow, adjust the alpha (aka transparency), and fiddle with the "size" parameter.
+
+```{r}
+ggplot()+
+  geom_sf(data = acs2020,
+          fill = "black", color = "transparent")+
+  geom_sf(data = philly_311,
+          color = "yellow", alpha = 0.2,
+          size = .5)+
+  theme_minimal()
+```
+
+
+## Spatial join and tract-level summary
+
+We will do what we did last week - relating 311 calls to tracts and then sumamrizing to find out how many points are in each tract. This is pretty simply done - here we initiate the join from `philly_311`. Try it and then look at the result using `glimpse()`
+
+```{r}
+points_and_tracts <- st_join(philly_311, acs2020)
+```
+
+
+OK, that's nice, but let's clean it up a bit so that all we are dealing with on the acs side is the GEOID. 
+
+Ultimately, we just need to summarize by the tract ID ... why is that?
+
+```{r}
+points_and_tracts <- st_join(philly_311, acs2020 %>%
+                               select(GEOID))
+```
+
+To make a summary, we use the `group_by` and `summarize` commands. 
+
+We are going to turn our point data into a dataframe - `dplyr` - the data wrangling package in the `tidyverse` is fussy about spatial objects sometimes because it doesn't know what to do about the "geometry" column.
+
+```{r}
+tract_dumping_summary <- points_and_tracts %>%
+  as.data.frame() %>%
+  group_by(GEOID) %>%
+  summarize(n = n())
+```
+
+Now we can join it back to our ACS data using a tabular join
+
+Examine each table before you do this so you can see what's about to happen... and then examine it afterwards.
+
+```{r}
+acs2020_incidents <- left_join(acs2020, tract_dumping_summary, by = "GEOID")
+```
+
+There are a bunch of NA observations in our joined data. Why?
+
+Let's turn those NAs into zeroes using a mutate command.
+
+We use an `ifelse` statement here - that's known as a "boolean" - remember that from our raster classes?
+
+If the observation column `n` is an NA, turn it into a zero, else, leave it as `n` - as is.
+
+```{r}
+acs2020_incidents <- acs2020_incidents %>%
+  mutate(n = ifelse(is.na(n) == TRUE, 0, n))
+```
+
+# Mapping 311
+
+```{r}
+ggplot()+
+  geom_sf(data = acs2020_incidents,
+          aes(fill = n), color = "transparent")+
+  theme_minimal()
+```
+
+# CAlculating Geometry
+
+The `st_area` function is basically "calculate geometry."
+
+```{r}
+acs2020_incidents <- acs2020_incidents %>%
+  mutate(area = st_area(.))
+```
+
+
+When you do geoprocessing in R, you get area and distance measurements IN THE LINEAR UNIT OF THE PROJECTION - projections are important! For the record, there are 27878555.87 square feet in a square mile. Yes imperial units are annoying! So let's manually do a transformation - note that I convert it to numeric to get rid of that notation from the area column
+
+```{r}
+acs2020_incidents <- acs2020_incidents %>%
+  mutate(area_sqmi = as.numeric(area/27878555.87))
+```
+
+# Mapping and analysis workshop
+
+Your job now is to create some new code chunks in your markdown and knit it.
+
+Get together with some classmates in groups and work out the 
+
+## Chunk 1 - Creating normalized measures of incident density
+
+Using the `mutate` command, create a column with a normalized measures of incident intensity. Choose one of these two options: 
+
+- `n_per_10k` (incidents per 10,000 people) or 
+- `n_per_sqmi` and (incidents per square mile)
+
+## Chunk 2 & 3 - Getting Some Spatial Data for Mapping
+
+Get some hydrology data from the `tigris` package to make the map so nice.
+
+Here is how you do this - I am going to be a bit general in how I describe this, so make sure you use the documentation in the R Studio viewer OR do some internet sleuthing to figure out how to make this work. 
+
+Use the `area_water` function from tigris, and request data of the class `sf` for Philadelphia county. This will call the data from the census spatial library of hydro features.
+
+When you have those data, make sure they are projected to 2272 using `st_crs`, if not, st_transform them.
+
+Download the Philly Council districts using `st_read` and be ready to lay those on top.
+
+They are hosted at this URL - philly_311 <- st_read("https://raw.githubusercontent.com/mafichman/cpln_0795/main/data/philly_311.geojson")
+
+# Chunks 4 & 5
+
+Make a chloropleth map of one of the measures
+
+Add a title, subtitle and caption (with data attribution) to the map.
+
+Change the color ramp if possible
+
+Add council districts on top with the fill set to transparent
+
+Add some annotation - what are your observations regarding the spatial process of these 311 calls?
+
+# Knit the markdown and push it to Github
+
+Use the "knit" button on top to render the markdown into an HTML document. Don't worry if it's pretty or not, there's time to worry about tat during the semester.
+
+When you are done working (and whether you can get this to knit or not), push the newest changes from this rmd to your repo that you created at the beginning of class. How is this done?
+
+Open up Github Desktop, load this repo as the "current repository" on the top left-hand menu.
+
+You'll see what files have changed - make some notes in your Github Desktop about what kinds of changes you made on the bottom left. Then "commit" these changes (at bottom right), and "push" them (on the top bar on the middle/right).
+
+Now go and check your github page and see that your repo has updated.
