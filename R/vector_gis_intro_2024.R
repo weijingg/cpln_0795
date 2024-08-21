@@ -45,6 +45,7 @@ median(phila_tracts$med_inc) # what's going wrong here??
 median(phila_tracts$med_inc, na.rm = TRUE)
 
 # Let's use the core dplyr "verbs" to manipulate the data and create some new data frames
+# Let's take a look at Intro to R for Planners to remember what these verbs do.
 
 just_two_columns <- phila_tracts %>%
   select(GEOID, tract)
@@ -55,6 +56,8 @@ some_new_column_names <- phila_tracts %>%
 
 # When I use the mutate command, I'm going to overwrite my existing data frame - that helps
 # keep my environment nice and clean (but can also cause me issues if i'm not careful)
+
+# Run this code on your own, and then let's discuss what's happening in the mutate statements.
 
 phila_tracts <- phila_tracts %>%
   mutate(pct_own = 100*(owner_hh/hhs),

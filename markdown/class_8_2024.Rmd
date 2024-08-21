@@ -221,6 +221,8 @@ tract_dumping_summary <- points_and_tracts %>%
   summarize(n = n())
 ```
 
+Examine these data, what do they look like?
+
 Now we can join it back to our ACS data using a tabular join
 
 Examine each table before you do this so you can see what's about to happen... and then examine it afterwards.
@@ -231,9 +233,9 @@ acs2020_incidents <- left_join(acs2020, tract_dumping_summary, by = "GEOID")
 
 There are a bunch of NA observations in our joined data. Why?
 
-Let's turn those NAs into zeroes using a mutate command.
+Remember to be wary of NA data - what do these data represent?
 
-We use an `ifelse` statement here - that's known as a "boolean" - remember that from our raster classes?
+We use an `ifelse` statement here - that's known as a "boolean" - remember that from last class?
 
 If the observation column `n` is an NA, turn it into a zero, else, leave it as `n` - as is.
 
@@ -251,7 +253,7 @@ ggplot()+
   theme_minimal()
 ```
 
-# CAlculating Geometry
+# Calculating Geometry
 
 The `st_area` function is basically "calculate geometry."
 
