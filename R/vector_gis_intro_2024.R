@@ -60,7 +60,13 @@ phila_tracts <- phila_tracts %>%
   mutate(pct_own = 100*(owner_hh/hhs),
          majority_white = ifelse(pct_wht > 50, "Majority White", "Majority Non-White"))
 
-# Let's do some more detailed kinds of summaries using group_by
+# Challenge #1 - Let's do some more detailed kinds of summaries using group_by
+# Create some Using this code framework - can you find the mean median income of tracts that are
+# majority white vs. non?
+
+phila_tracts %>% 
+  group_by(majority_white) %>% 
+  summarize(total_pop = sum(pop))
 
 # OK, now let's get SPATIAL
 
@@ -79,7 +85,7 @@ st_crs(phila_tracts_sf)
 # Let's reproject it to PA State Plane (see spatialreference.org to find the CRS)
 # To keep our environment nice and neat, let's 
 
-phila_tracts_sf %>% 
+phila_tracts_sf <- phila_tracts_sf %>% 
   st_transform(crs = 2272)
 
 # do a tabular join to bring the two objects together
@@ -140,8 +146,8 @@ ggplot()+
     caption = "Data: American Community Survey 5-year estimates")+
   theme_bw()
 
-## Challenge number 1 - make a new variable using mutate and generate a two histograms with those data
-## One standalone, and one using facets
+## Challenge number 2 - make a new variable using mutate and generate a new facetted histogram 
+# for a different variable
 
 # MAKING MAPS
 
@@ -158,33 +164,11 @@ ggplot()+
           aes(fill = med_inc), color = "transparent")+
   theme_minimal()
 
-# Let's make a new column of data on the fly and visualize it
 
-ggplot()+
-  geom_sf(data = tracts_with_data %>%
-    mutate(owner_pct = 100*(owner_hh / hhs)),
-  aes(fill = owner_pct)) +
-  theme_minimal()
+# Challenge # 2 - make a map visualizations by mutating new variables. Create a title, subtitles etc.,
+# You can also use facets if you want.
 
-# This creates some weird tract with an erroneous number, let's filter out anything over 100%
 
-ggplot()+
-  geom_sf(data = tracts_with_data %>%
-            mutate(owner_pct = 100*(owner_hh / hhs)) %>%
-            filter(owner_pct <= 100),
-          aes(fill = owner_pct)) +
-  theme_minimal()
-
-# This creates some weird tract with an erroneous number, let's filter out anything over 100%
-
-ggplot()+
-  geom_sf(data = tracts_with_data %>%
-            mutate(owner_pct = 100*(owner_hh / hhs)) %>%
-            filter(owner_pct <= 100),
-          aes(fill = owner_pct)) +
-  theme_minimal()
-
-# Challenge # 2 - make 2 new map visualizations by mutating new variables.
 
 # Challenge # 3 - if time allows:
 
