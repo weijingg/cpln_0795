@@ -19,13 +19,24 @@ When you click the **Knit** button a document will be generated that includes bo
 # Start a Github Account, Fork this repo and clone it
 
 1. Start a github account and download github desktop
+
 2. Find the repository for this class and "fork" it - https://github.com/mafichman/cpln_0795
+
 3. Open Github Desktop, and navigate to file -> clone repository. Navigate to the cpln_0795 repo and clone it - it should have populated in your menu
+
 4. Open class_8_2024.rmd in R Studio.
 
 # The Tutorial
 
-Today we are going to load our ACS data that we have been working with all course long using `tidycensus` - a package that interfaces with the Census API. We are going to reprise our lesson from last week where we made a spatial summary of point data - illegal dumping incidents, summarized by census tract, then normalized to the tract area or population.
+Learning Goals:
+
+- Running more R code
+
+- Doing geoprocessing and spatial summaries using R
+
+- Familiarity with GitHub and R Markdown
+
+Today we are going to load our Philadelphia ACS data that we have been working with all course long using `tidycensus` - a package that interfaces with the Census API. We are going to reprise our lesson from last week where we made a spatial summary of point data - illegal dumping incidents, summarized by census tract, then normalized to the tract area or population.
 
 We are going to work in R Markdown, basically just running code, and at the end, you can "knit" your own markdown and push it back to your Github repo.
 
@@ -38,6 +49,8 @@ Go to the session tab in R Studio and Clear Workspace to get old objects out of 
 You can run this "chunk" by copying and pasting the code into the console OR just hitting the little green "play" button on the top of the chunk.
 
 Look at how the "chunk" is formatted - there is a "wrapper" on the code.
+
+Don't have a package installed? Run install.packages("name_of_package") once, and then it's on your computer ready to be called into your environment using `library`
 
 ```{r, echo=FALSE, message=FALSE}
 # Load required libraries
@@ -97,7 +110,7 @@ acs_vars <- c("B01001_001E", # ACS total Pop estimate
 
 If you don't know what get_acs is, try ??get_acs
 
-Note that geometry = TRUE - we are asking for a shp/geojson/sf type object!
+Note that geometry = TRUE - we are asking for a shp/geojson/sf type object. If we said FALSE, we'd just get a flat file data frame.
 
 ```{r}
 acs2020 <- get_acs(geography = "tract",
@@ -139,11 +152,13 @@ acs2020 <- acs2020 %>%
 
 Our 311 data from Class 3 are hosted online at my class repo - you can use  `st_read` to read a spatial data object right in from the internet using the URL.
 
+Prompt - run this section of code on your own, we did this stuff yesterday.
+
 ```{r}
 philly_311 <- st_read("https://raw.githubusercontent.com/mafichman/cpln_0795/main/data/philly_311.geojson")
 ```
 
-# Explore 311 data
+## Explore 311 data
 
 Check out the data, these are points.
 
