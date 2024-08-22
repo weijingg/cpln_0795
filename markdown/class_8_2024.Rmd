@@ -177,9 +177,13 @@ acs2020 <- acs2020 %>%
 
 ## Plotting
 
-Now that everything is in the same CRS, let's look at both things together. Let's set acs2020 to just be all black, no aes() visualization here, and let's set our linework to transparent.
+Now that everything is in the same CRS, let's look at both things together on a plot. 
+
+Let's set acs2020 to just be all black, no aes() visualization here, and let's set our linework to transparent.
 
 We can vary the aesthetics of the points to see if we can get a better looking map. I'm going to make the points yellow, adjust the alpha (aka transparency), and fiddle with the "size" parameter.
+
+Prompt: Try it yourself - change the color and the alpha.
 
 ```{r}
 ggplot()+
