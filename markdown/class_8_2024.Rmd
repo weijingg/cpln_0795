@@ -318,7 +318,7 @@ They are hosted at this URL - philly_311 <- st_read("https://raw.githubuserconte
 
 # Chunks 4 & 5
 
-Make a chloropleth map of one of the measures
+Make a chloropleth map of one of the measures (See the above tab "Mapping 311" or some of yesterday's code for an example of how to do this.)
 
 Add a title, subtitle and caption (with data attribution) to the map.
 
@@ -328,7 +328,7 @@ Add council districts on top with the fill set to transparent
 
 Add some annotation - what are your observations regarding the spatial process of these 311 calls?
 
-# Knit the markdown and push it to Github
+# Knit the markdown and push it to your Github repo
 
 Use the "knit" button on top to render the markdown into an HTML document. Don't worry if it's pretty or not, there's time to worry about tat during the semester.
 
