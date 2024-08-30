@@ -70,7 +70,7 @@ https://api.census.gov/data/key_signup.html
 Paste your key into the space below and run the function `census_api_key`
 
 ```{r}
-census_api_key("YOUR KEY GOES HERE", overwrite = TRUE)
+census_api_key("6b7470202031e474c1e9511d2339600447892673", overwrite = TRUE)
 ```
 
 # Load Variables
@@ -302,6 +302,11 @@ Using the `mutate` command, create a column with a normalized measures of incide
 - `n_per_10k` (incidents per 10,000 people) or 
 - `n_per_sqmi` and (incidents per square mile)
 
+```{r}
+acs2020_incidents <- acs2020_incidents %>%
+  mutate(n_per_sqmi = n/area_sqmi)
+```
+
 ## Chunk 2 & 3 - Getting Some Spatial Data for Mapping
 
 Get some hydrology data from the `tigris` package to make the map so nice.
@@ -316,6 +321,12 @@ Download the Philly Council districts using `st_read` and be ready to lay those 
 
 They are hosted at this URL - philly_311 <- st_read("https://raw.githubusercontent.com/mafichman/cpln_0795/main/data/philly_311.geojson")
 
+```{r}
+philly_water <- area_water(42, 101, year = 2020) %>%
+  st_transform(2272)
+# intersect(names(philly_water),names(philly_311))
+```
+
 # Chunks 4 & 5
 
 Make a chloropleth map of one of the measures (See the above tab "Mapping 311" or some of yesterday's code for an example of how to do this.)
@@ -327,6 +338,19 @@ Change the color ramp if possible
 Add council districts on top with the fill set to transparent
 
 Add some annotation - what are your observations regarding the spatial process of these 311 calls?
+
+```{r}
+ggplot()+
+  geom_sf(data = acs2020_incidents,
+          aes(fill = n_per_sqmi), color = "lightgrey")+
+  scale_fill_viridis_c()+
+  labs(title="Illegal dumping incidents per square mile",
+       subtitle="Philadelphia, 2020",
+       caption="Concentration of illegal dumping along the Eastern border of city\nand Delware River and into the center city path",
+       fill="Dumpings per sq mile")+
+  geom_sf(data=philly_water,fill="lightblue")+
+  theme_minimal()
+```
 
 # Knit the markdown and push it to your Github repo
 
